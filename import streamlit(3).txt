@@ -1,0 +1,124 @@
+import streamlit as st
+import pandas as pd
+from datetime import datetime
+from fpdf import FPDF
+import os
+import urllib.parse
+
+# --- CONFIGURACIÓN DE PÁGINA ---
+st.set_page_config(page_title="GLOBAL - Gestión de Servicios", layout="wide")
+
+# Función para cargar datos de forma segura
+def cargar_datos():
+    try:
+        # Ajustamos los nombres a los archivos que subiste
+        df_trabajos = pd.read_csv("GLOBAL.xlsx - TRABAJOS.csv")
+        df_listas = pd.read_csv("GLOBAL.xlsx - LISTAS.csv")
+        return df_trabajos, df_listas
+    except:
+        return None, None
+
+df_trabajos, df_listas = cargar_datos()
+
+# --- CLASE PDF ESTILO PROFORMA ---
+class PDF(FPDF):
+    def header(self):
+        if os.path.exists("logo _global.png"):
+            self.image("logo _global.png", 10, 8, 33)
+        self.set_font('Arial', 'B', 15)
+        self.cell(80)
+        self.set_text_color(0, 51, 102)
+        self.cell(30, 10, 'PROFORMA', 0, 0, 'C')
+        self.ln(20)
+
+def generar_pdf(datos):
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_text_color(0, 0, 0)
+    
+    # Datos del Cliente
+    pdf.set_font("Arial", 'B', 10)
+    campos = [
+        ("SEÑOR (ES) :", datos['cliente']),
+        ("PROYECTO :", datos['proyecto']),
+        ("TELÉFONO :", datos['telefono']),
+        ("DIRECCIÓN :", datos['direccion'])
+    ]
+    for etiqueta, valor in campos:
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(35, 8, etiqueta, 0)
+        pdf.set_font("Arial", size=10)
+        pdf.cell(155, 8, str(valor).upper(), "B", ln=True)
+    pdf.ln(10)
+
+    # Tabla
+    pdf.set_fill_color(240, 240, 240)
+    pdf.set_font("Arial", 'B', 9)
+    pdf.cell(20, 10, "CANT.", 1, 0, 'C', True)
+    pdf.cell(100, 10, "DESCRIPCIÓN", 1, 0, 'C', True)
+    pdf.cell(35, 10, "P. UNIT.", 1, 0, 'C', True)
+    pdf.cell(35, 10, "TOTAL", 1, 1, 'C', True)
+
+    pdf.set_font("Arial", size=9)
+    total = datos['cant'] * datos['p_unit']
+    pdf.cell(20, 10, str(datos['cant']), 1, 0, 'C')
+    pdf.cell(100, 10, datos['desc'], 1)
+    pdf.cell(35, 10, f"{datos['p_unit']:,.2f}", 1, 0, 'R')
+    pdf.cell(35, 10, f"{total:,.2f}", 1, 1, 'R')
+
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(155, 10, "TOTAL PARCIAL", 0, 0, 'R')
+    pdf.cell(35, 10, f"{total:,.2f}", 1, 1, 'R')
+
+    # Condiciones
+    pdf.ln(10)
+    pdf.set_font("Arial", size=8)
+    pdf.multi_cell(190, 5, "1.- Duración de la Oferta 15 días\n2.- Anticipo del 50% antes de iniciar el trabajo\n3.- El saldo se cancelará al finalizar el servicio.")
+    
+    return pdf.output(dest='S').encode('latin-1')
+
+# --- INTERFAZ STREAMLIT ---
+if df_trabajos is not None:
+    st.sidebar.image("logo _global.png")
+    menu = st.sidebar.radio("Navegación", ["Dashboard", "Nueva ProForma"])
+
+    if menu == "Nueva ProForma":
+        st.title("📄 Generar Cotización Profesional")
+        
+        with st.form("proforma_form"):
+            col1, col2 = st.columns(2)
+            cliente = col1.text_input("Señor (es):")
+            tel = col2.text_input("WhatsApp (ej: 59170000000):")
+            proy = col1.text_input("Proyecto:")
+            direc = col2.text_input("Dirección:")
+            
+            desc = st.selectbox("Servicio:", df_listas['DESCRIPCION DEL TRABAJO'].unique())
+            c1, c2 = st.columns(2)
+            cant = c1.number_input("Cantidad", min_value=1)
+            precio = c2.number_input("Precio Unitario", min_value=0.0)
+            
+            submit = st.form_submit_button("Generar ProForma")
+
+        if submit:
+            datos = {"cliente": cliente, "proyecto": proy, "telefono": tel, "direccion": direc, "cant": cant, "desc": desc, "p_unit": precio}
+            pdf_bytes = generar_pdf(datos)
+            
+            st.success("✅ ProForma generada con éxito")
+            st.download_button("⬇️ Descargar PDF", pdf_bytes, f"Proforma_{cliente}.pdf", "application/pdf")
+            
+            # Botón de WhatsApp
+            mensaje = f"Hola {cliente}, le envío la ProForma de GLOBAL por el servicio de {desc}. Saludos."
+            url_wa = f"https://wa.me/{tel}?text={urllib.parse.quote(mensaje)}"
+            st.markdown(f'''<a href="{url_wa}" target="_blank">
+                <button style="background-color:#25D366; color:white; border:none; padding:12px; border-radius:5px; width:100%; cursor:pointer; font-weight:bold;">
+                📲 Enviar por WhatsApp
+                </button></a>''', unsafe_allow_html=True)
+
+    else:
+        st.title("🏗️ Dashboard - GLOBAL")
+        st.write("Resumen de trabajos registrados")
+        st.dataframe(df_trabajos, use_container_width=True)
+else:
+    st.error("Por favor, sube los archivos CSV a GitHub para que la aplicación funcione.")
+
