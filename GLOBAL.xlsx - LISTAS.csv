@@ -1,0 +1,30 @@
+TIPO DE TRABAJO,TIPO,TIPO DE PISO,DESCRIPCION DEL TRABAJO,ESTADOS
+ELECTRICIDAD,Instalacion,Planta baja,Tomacorriente,PENDIENTE
+PLOMERIA,Mantenimiento,Primer piso,Interruptor,EN PROCESO
+PINTURA,Reparacion,Segundo piso,Interruptor Termomagnetico,FINALIZADO
+REFRIGERACION,,Tercer Piso,Cerca Electrica,ENTREGADO
+SOLDADURA,,Zotano,Cambio de Luminaria,
+ELECTRONICA,,,Cambio de soquets,
+,,,Interruptor Diferencial,
+,,,Red de Inernet,
+,,,pintura,
+,,,Instalacion Medidor,
+,,,"Instalacion Puerta/madera,aluminio",
+,,,Cambio de Cerradura,
+,,,Cambio de compresor,
+,,,Cambio de ventilador/refrigeracion,
+,,,Cambio de capacitor,
+,,,Limpieza/Deshielo,
+,,,Cambio de Goma Heladera,
+,,,Cambio de Placa Electronica/A.H.,
+,,,Corte circuito,
+,,,Instalacion de Ducha Electrica,
+,,,Instalacion de Puesta a Tierra,
+,,,Cargado de Gas,
+,,,Pintado de Pared,
+,,,Pinado de Pared + Techo,
+,,,Pinado de techo,
+,,,Cambio de Componente Electronico,
+,,,Soldadura de Porton,
+,,,Soldadura de Rejas/Verjas,
+,,,Pintado de Fachada,
